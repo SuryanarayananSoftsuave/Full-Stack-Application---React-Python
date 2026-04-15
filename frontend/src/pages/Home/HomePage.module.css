@@ -1,0 +1,14 @@
+.page {
+  max-width: 800px;
+}
+
+.greeting {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.email {
+  color: var(--color-text-light);
+  font-size: 0.875rem;
+}

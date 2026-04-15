@@ -1,0 +1,12 @@
+.layout {
+    min-height: 100vh;
+  }
+  
+  .content {
+    padding-top: var(--navbar-height);
+    transition: margin-left 0.2s ease;
+  }
+  
+  .inner {
+    padding: 1.5rem;
+  }
