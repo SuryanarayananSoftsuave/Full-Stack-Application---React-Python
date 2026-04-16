@@ -22,13 +22,15 @@ export function AuthProvider({ children }) {
 
   // Fetch the current user from the backend.
   // Called on mount and after login to populate user state.
+  // The request interceptor in client.js attaches the access_token
+  // from localStorage as an Authorization header automatically.
   const fetchUser = useCallback(async () => {
     try {
       const data = await authApi.getMe();
       setUser(data);
     } catch {
-      // getMe failed -- either no cookie, or expired session.
-      // The interceptor already tried refreshing.
+      // getMe failed -- either no token in localStorage, or expired.
+      // The interceptor already tried refreshing via the httpOnly cookie.
       // If we're here, the user is genuinely not authenticated.
       setUser(null);
     } finally {
@@ -37,23 +39,19 @@ export function AuthProvider({ children }) {
   }, []);
 
   // On first mount, try to restore the session.
-  // If the user still has a valid access_token (or refresh_token)
-  // cookie, this will succeed and they stay logged in across
-  // page refreshes without re-entering credentials.
+  // If localStorage has a valid access_token, /me succeeds immediately.
+  // If it's expired, the interceptor silently refreshes using the
+  // httpOnly refresh_token cookie and retries.
   useEffect(() => {
     fetchUser();
   }, [fetchUser]);
 
   const login = useCallback(
     async (email, password) => {
-      // This call sets the httpOnly cookies via Set-Cookie headers.
+      // authApi.login saves the access_token to localStorage and the
+      // backend sets the refresh_token as an httpOnly cookie.
       await authApi.login(email, password);
-
-      // Now fetch the full user profile. We do this as a separate call
-      // instead of returning user data from /login because:
-      // 1. /login's job is authentication, not data fetching (SRP)
-      // 2. It guarantees the cookie actually works end-to-end
-      // 3. We get the same user shape as every subsequent /me call
+      // Fetch the full user profile to populate state.
       await fetchUser();
     },
     [fetchUser]
@@ -69,7 +67,9 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     await authApi.logout();
-    // Clear user state immediately. Don't wait for a /me call.
+    // authApi.logout clears localStorage and the backend clears
+    // the httpOnly cookie. Also clear user state immediately.
+    localStorage.removeItem("access_token");
     setUser(null);
   }, []);
 

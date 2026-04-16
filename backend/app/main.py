@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.db.mongodb import lifespan
 from app.routes.auth import router as auth_router
+from app.routes.task import router as task_router
 
 
 def create_app() -> FastAPI:
@@ -22,6 +23,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(auth_router, prefix="/api")
+    app.include_router(task_router, prefix="/api")
 
     return app
 

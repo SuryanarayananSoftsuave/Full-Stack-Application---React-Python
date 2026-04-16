@@ -15,6 +15,10 @@ async def lifespan(_app):
 
     db = client[settings.MONGODB_DB_NAME]
     await db["users"].create_index("email", unique=True)
+    await db["tasks"].create_index("created_by")
+    await db["tasks"].create_index("assignee_id")
+    await db["tasks"].create_index("status")
+    await db["tasks"].create_index("created_at")
 
     yield
 

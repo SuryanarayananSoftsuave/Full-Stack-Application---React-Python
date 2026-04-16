@@ -57,6 +57,11 @@ class TokenPair(BaseModel):
     refresh_token: str
 
 
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
 class MessageResponse(BaseModel):
     message: str
 

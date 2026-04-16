@@ -5,6 +5,7 @@ import { GuestRoute } from "./components/GuestRoute";
 import { LoginPage } from "./pages/Login/LoginPage";
 import { RegisterPage } from "./pages/Register/Registerpage";
 import { HomePage } from "./pages/Home/HomePage";
+import { AllTasksPage } from "./pages/Tasks/AllTasksPage";
 
 // ── App ─────────────────────────────────────────────────────────────────────
 // The component tree order matters:
@@ -32,6 +33,7 @@ function App() {
           {/* Protected routes: only accessible when logged in */}
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<HomePage />} />
+            <Route path="/tasks" element={<AllTasksPage />} />
           </Route>
         </Routes>
       </AuthProvider>

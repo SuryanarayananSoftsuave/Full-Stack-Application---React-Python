@@ -1,36 +1,32 @@
 import axios from "axios";
 
-// ── Create the shared Axios instance ────────────────────────────────────────
-// Every API call in the app imports and uses THIS instance.
-// We never use raw `axios.get(...)` -- always `client.get(...)`.
-// This guarantees every request goes through our interceptors.
 const client = axios.create({
   baseURL: "/api",
   headers: { "Content-Type": "application/json" },
-
-  // CRITICAL: This tells the browser to include httpOnly cookies
-  // in every request. Without this, cookies are silently dropped
-  // and every authenticated request would return 401.
+  // Still needed: the browser must send the httpOnly refresh_token
+  // cookie on /auth/refresh requests.
   withCredentials: true,
 });
 
+// ── Request interceptor ─────────────────────────────────────────────────────
+// Reads the access token from localStorage and attaches it as a
+// Bearer token on every outgoing request. This is the standard
+// OAuth2 pattern that Swagger/OpenAPI docs expect.
+client.interceptors.request.use((config) => {
+  const token = localStorage.getItem("access_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 // ── Refresh state ───────────────────────────────────────────────────────────
-// These two variables coordinate the "refresh once, retry many" pattern.
-//
-// Problem: Imagine 3 API calls fire at the same time, and all 3 get back
-// a 401 because the access_token expired. Without coordination, each one
-// would independently call /auth/refresh -- that's 3 refresh calls when
-// we only need 1. Worse, the 2nd and 3rd might fail because the 1st
-// already consumed the old refresh_token.
-//
-// Solution: The first 401 sets `isRefreshing = true` and actually calls
-// /auth/refresh. The 2nd and 3rd 401s see `isRefreshing = true`, so
-// instead of refreshing again, they push themselves into `failedQueue`
-// and wait. When the refresh completes, we drain the queue and retry all.
+// Coordinates "refresh once, retry many": if 3 requests all get 401
+// simultaneously, only 1 refresh call fires. The others wait in the
+// queue and retry after the refresh succeeds.
 let isRefreshing = false;
 let failedQueue = [];
 
-// Resolves or rejects every promise sitting in the queue.
 function processQueue(error) {
   failedQueue.forEach(({ resolve, reject }) => {
     if (error) {
@@ -44,18 +40,13 @@ function processQueue(error) {
 
 // ── Response interceptor ────────────────────────────────────────────────────
 client.interceptors.response.use(
-  // Happy path: 2xx responses pass straight through, untouched.
   (response) => response,
 
-  // Error path: this runs for every non-2xx response.
   async (error) => {
     const originalRequest = error.config;
 
-    // Skip the refresh/retry logic entirely for auth endpoints.
-    // A 401 from /auth/login means "wrong credentials" -- NOT "expired token."
-    // Without this guard, a failed login triggers a refresh attempt,
-    // which fails, which redirects to /login, which reloads the page,
-    // which calls /me, which 401s, which refreshes... infinite loop.
+    // Auth endpoints return 401 for business reasons (wrong password),
+    // not because of expired tokens. Don't try to refresh for those.
     const url = originalRequest.url || "";
     const isAuthEndpoint =
       url.includes("/auth/login") ||
@@ -70,38 +61,35 @@ client.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // If another request is already refreshing, don't fire a second
-    // refresh call. Instead, queue this request and wait.
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
       }).then(() => client(originalRequest));
     }
 
-    // Mark this request so we don't retry it infinitely.
     originalRequest._retry = true;
     isRefreshing = true;
 
     try {
-      // Use raw `axios` here, NOT `client`.
-      // Why? If we used `client.post(...)`, this interceptor would
-      // intercept the refresh call's own 401, causing an infinite loop.
-      await axios.post("/api/auth/refresh", {}, { withCredentials: true });
+      // Use raw axios for the refresh call to avoid this interceptor
+      // catching the refresh's own 401 (infinite loop prevention).
+      // withCredentials sends the httpOnly refresh_token cookie.
+      const { data } = await axios.post(
+        "/api/auth/refresh",
+        {},
+        { withCredentials: true }
+      );
 
-      // Refresh succeeded -- new cookies are now set by the browser.
-      // Resolve all queued requests so they retry with fresh cookies.
+      // Save the new access token from the response body.
+      localStorage.setItem("access_token", data.access_token);
+
       processQueue(null);
-
-      // Retry the original request that started all this.
       return client(originalRequest);
     } catch (refreshError) {
-      // Refresh failed -- the session is truly dead.
-      // Reject everything in the queue.
       processQueue(refreshError);
 
-      // Redirect to login only if we're not already there.
-      // Without this check, a failed refresh on /login would
-      // cause a reload loop: redirect -> mount -> /me 401 -> repeat.
+      // Session is dead -- clear stale token and redirect.
+      localStorage.removeItem("access_token");
       if (window.location.pathname !== "/login") {
         window.location.href = "/login";
       }

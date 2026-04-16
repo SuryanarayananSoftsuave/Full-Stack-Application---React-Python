@@ -5,6 +5,7 @@ from app.config import settings
 from app.db.mongodb import get_database
 from app.dependencies.auth import get_current_active_user
 from app.models.user import (
+    LoginResponse,
     MessageResponse,
     UserCreate,
     UserLogin,
@@ -16,17 +17,7 @@ from app.services.auth_service import authenticate_user, refresh_tokens, registe
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-def _set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        secure=settings.COOKIE_SECURE,
-        samesite=settings.COOKIE_SAMESITE,
-        domain=settings.COOKIE_DOMAIN,
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        path="/",
-    )
+def _set_refresh_cookie(response: Response, refresh_token: str) -> None:
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
@@ -34,13 +25,12 @@ def _set_auth_cookies(response: Response, access_token: str, refresh_token: str)
         secure=settings.COOKIE_SECURE,
         samesite=settings.COOKIE_SAMESITE,
         domain=settings.COOKIE_DOMAIN,
-        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 60,
         path="/api/auth/refresh",
     )
 
 
-def _clear_auth_cookies(response: Response) -> None:
-    response.delete_cookie("access_token", path="/")
+def _clear_refresh_cookie(response: Response) -> None:
     response.delete_cookie("refresh_token", path="/api/auth/refresh")
 
 
@@ -59,8 +49,8 @@ async def register(
 
 @router.post(
     "/login",
-    response_model=MessageResponse,
-    summary="Authenticate and receive tokens via httponly cookies",
+    response_model=LoginResponse,
+    summary="Authenticate and receive access token",
 )
 async def login(
     data: UserLogin,
@@ -68,14 +58,14 @@ async def login(
     db: AsyncIOMotorDatabase = Depends(get_database),
 ):
     tokens = await authenticate_user(db, data.email, data.password)
-    _set_auth_cookies(response, tokens.access_token, tokens.refresh_token)
-    return MessageResponse(message="Login successful")
+    _set_refresh_cookie(response, tokens.refresh_token)
+    return LoginResponse(access_token=tokens.access_token)
 
 
 @router.post(
     "/refresh",
-    response_model=MessageResponse,
-    summary="Refresh tokens using the refresh_token cookie",
+    response_model=LoginResponse,
+    summary="Get a new access token using the refresh_token cookie",
 )
 async def refresh(
     request: Request,
@@ -89,17 +79,17 @@ async def refresh(
             detail="Refresh token missing",
         )
     tokens = await refresh_tokens(db, token)
-    _set_auth_cookies(response, tokens.access_token, tokens.refresh_token)
-    return MessageResponse(message="Tokens refreshed")
+    _set_refresh_cookie(response, tokens.refresh_token)
+    return LoginResponse(access_token=tokens.access_token)
 
 
 @router.post(
     "/logout",
     response_model=MessageResponse,
-    summary="Clear auth cookies",
+    summary="Clear refresh token cookie",
 )
 async def logout(response: Response):
-    _clear_auth_cookies(response)
+    _clear_refresh_cookie(response)
     return MessageResponse(message="Logged out")
 
 

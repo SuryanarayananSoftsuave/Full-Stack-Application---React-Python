@@ -1,4 +1,5 @@
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from app.core.security import decode_token
@@ -6,24 +7,17 @@ from app.db.mongodb import get_database
 from app.models.user import UserInDB
 from app.services.user_service import get_user_by_id
 
-
-def _get_token_from_cookie(request: Request) -> str:
-    token = request.cookies.get("access_token")
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-        )
-    return token
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
 async def get_current_user(
-    token: str = Depends(_get_token_from_cookie),
+    token: str = Depends(oauth2_scheme),
     db: AsyncIOMotorDatabase = Depends(get_database),
 ) -> UserInDB:
     credentials_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
     )
 
     try:

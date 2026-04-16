@@ -1,14 +1,5 @@
 import client from "./client";
 
-// ── Auth API service ────────────────────────────────────────────────────────
-// Thin wrappers around the Axios client. Each function maps 1:1 to a
-// backend endpoint. Components import these functions instead of
-// touching Axios directly.
-//
-// Notice we return `response.data` -- this unwraps the Axios response
-// envelope so components get the actual JSON payload, not the full
-// { status, headers, data, config } object.
-
 const authApi = {
   register: async (email, password, fullName) => {
     const response = await client.post("/auth/register", {
@@ -24,23 +15,24 @@ const authApi = {
       email,
       password,
     });
-    // The backend sets httpOnly cookies in the response headers.
-    // We never see or touch the tokens -- the browser handles them.
-    // All we get back is { message: "Login successful" }.
+    // Backend returns { access_token, token_type } in the body
+    // and sets the refresh_token as an httpOnly cookie.
+    // Save the access token to localStorage so the request
+    // interceptor in client.js can attach it to future requests.
+    localStorage.setItem("access_token", response.data.access_token);
     return response.data;
   },
 
   logout: async () => {
     const response = await client.post("/auth/logout");
-    // Backend clears the httpOnly cookies via Set-Cookie headers.
+    // Backend clears the httpOnly refresh_token cookie.
+    // Clear the access token from localStorage on our side.
+    localStorage.removeItem("access_token");
     return response.data;
   },
 
   getMe: async () => {
     const response = await client.get("/auth/me");
-    // Returns the full user object: id, email, full_name, roles, etc.
-    // The access_token cookie is sent automatically by the browser.
-    // If it's expired, our interceptor in client.js silently refreshes.
     return response.data;
   },
 };
