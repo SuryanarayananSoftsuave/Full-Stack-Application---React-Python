@@ -103,7 +103,10 @@ export function AllTasksPage() {
             <tbody>
               {tasks.map((task) => (
                 <tr key={task._id}>
-                  <td className={styles.titleCell}>{task.title}</td>
+                  <td className={styles.titleCell} onClick={() => {
+                    setSelectedTask(task);
+                    setModalOpen(true);
+                  }}>{task.title}</td>
                   <td>
                     <span className={`${styles.badge} ${styles[`status_${task.status}`]}`}>
                       {STATUS_LABELS[task.status] || task.status}
