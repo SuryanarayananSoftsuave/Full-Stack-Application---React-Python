@@ -45,7 +45,7 @@
 
 .navLinkActive {
   color: var(--color-primary);
-  background: #eef2ff;
+  background: var(--color-active-bg);
 }
 
 /* ── Collapsible group (Tasks, etc.) ───────────────────────────────────── */
@@ -128,7 +128,7 @@
 
 .subLinkActive {
   color: var(--color-primary);
-  background: #eef2ff;
+  background: var(--color-active-bg);
   font-weight: 500;
 }
 

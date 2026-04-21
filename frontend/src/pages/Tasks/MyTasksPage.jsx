@@ -8,5 +8,5 @@ export function MyTasksPage() {
   // Render nothing while the auth check is still resolving.
   if (!user) return null;
 
-  return <TasksList title="My Tasks" lockedAssigneeId={user.id || user._id} />;
+  return <TasksList title="My Tasks" lockedAssigneeId={user.id || user._id} excludeTypeFilter="user_story" />;
 }

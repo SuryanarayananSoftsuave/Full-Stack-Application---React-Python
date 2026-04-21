@@ -23,6 +23,12 @@ const TYPE_OPTIONS = [
   { value: "bug", label: "Bug" },
 ];
 
+function defaultDueDate() {
+  const d = new Date();
+  d.setDate(d.getDate() + 2);
+  return d.toISOString().slice(0, 10);
+}
+
 const INITIAL_FORM = {
   title: "",
   description: "",
@@ -30,12 +36,14 @@ const INITIAL_FORM = {
   priority: "medium",
   task_type: "task",
   sprint: "",
-  due_date: "",
+  due_date: defaultDueDate(),
   assignee_id: "",
 };
 
 export function CreateTaskModal({ onClose, onCreated }) {
   const [form, setForm] = useState(INITIAL_FORM);
+  const [tags, setTags] = useState([]);
+  const [tagInput, setTagInput] = useState("");
   const [users, setUsers] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -50,6 +58,19 @@ export function CreateTaskModal({ onClose, onCreated }) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const addTag = () => {
+    const val = tagInput.trim().toLowerCase();
+    if (val && !tags.includes(val)) setTags((prev) => [...prev, val]);
+    setTagInput("");
+  };
+
+  const removeTag = (t) => setTags((prev) => prev.filter((x) => x !== t));
+
+  const handleTagKeyDown = (e) => {
+    if (e.key === "Enter") { e.preventDefault(); addTag(); }
+    if (e.key === "Backspace" && !tagInput && tags.length) removeTag(tags[tags.length - 1]);
+  };
+
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) onClose();
   };
@@ -60,7 +81,7 @@ export function CreateTaskModal({ onClose, onCreated }) {
     setSubmitting(true);
 
     try {
-      const payload = { ...form };
+      const payload = { ...form, tags };
       if (!payload.sprint) delete payload.sprint;
       if (!payload.due_date) delete payload.due_date;
       if (!payload.assignee_id) delete payload.assignee_id;
@@ -80,137 +101,172 @@ export function CreateTaskModal({ onClose, onCreated }) {
     <div className={styles.backdrop} onClick={handleBackdropClick}>
       <div className={styles.modal}>
         <div className={styles.header}>
-          <h2 className={styles.title}>Create New Task</h2>
+          <div className={styles.headerLeft}>
+            <span className={styles.headerIcon}>+</span>
+            <h2 className={styles.headerTitle}>Create New Task</h2>
+          </div>
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
             &times;
           </button>
         </div>
 
-        <form className={styles.form} onSubmit={handleSubmit}>
+        <form className={styles.body} onSubmit={handleSubmit}>
           {error && <div className={styles.error}>{error}</div>}
 
-          <div className={styles.field}>
-            <label htmlFor="ct-title">Title *</label>
+          {/* Row 1: Title */}
+          <div className={styles.section}>
+            <label className={styles.sectionLabel}>Task Name</label>
             <input
-              id="ct-title"
               name="title"
               type="text"
               value={form.title}
               onChange={handleChange}
               required
               maxLength={200}
-              placeholder="Enter task title"
+              placeholder="What needs to be done?"
+              className={styles.titleInput}
             />
           </div>
 
-          <div className={styles.field}>
-            <label htmlFor="ct-description">Description</label>
+          {/* Row 2: Assignee | Email | Department */}
+          <div className={styles.section}>
+            <label className={styles.sectionLabel}>Assignee</label>
+            <div className={styles.row3}>
+              <div className={styles.field}>
+                <label htmlFor="ct-assignee">Name</label>
+                <select
+                  id="ct-assignee"
+                  name="assignee_id"
+                  value={form.assignee_id}
+                  onChange={handleChange}
+                >
+                  <option value="">Unassigned</option>
+                  {users.map((u) => (
+                    <option key={u._id} value={u._id}>{u.full_name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.field}>
+                <label htmlFor="ct-email">Email</label>
+                <input
+                  id="ct-email"
+                  type="email"
+                  value={selectedUser?.email || ""}
+                  readOnly
+                  className={styles.readonlyInput}
+                  placeholder="—"
+                />
+              </div>
+              <div className={styles.field}>
+                <label htmlFor="ct-dept">Department</label>
+                <input
+                  id="ct-dept"
+                  type="text"
+                  value={selectedUser?.department || ""}
+                  readOnly
+                  className={styles.readonlyInput}
+                  placeholder="—"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Row 3: Status | Priority | Type */}
+          <div className={styles.section}>
+            <label className={styles.sectionLabel}>Details</label>
+            <div className={styles.row3}>
+              <div className={styles.field}>
+                <label htmlFor="ct-status">Status</label>
+                <select id="ct-status" name="status" value={form.status} onChange={handleChange}>
+                  {STATUS_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.field}>
+                <label htmlFor="ct-priority">Priority</label>
+                <select id="ct-priority" name="priority" value={form.priority} onChange={handleChange}>
+                  {PRIORITY_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.field}>
+                <label htmlFor="ct-type">Type</label>
+                <select id="ct-type" name="task_type" value={form.task_type} onChange={handleChange}>
+                  {TYPE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 4: Sprint | Due Date */}
+          <div className={styles.section}>
+            <label className={styles.sectionLabel}>Schedule</label>
+            <div className={styles.row2}>
+              <div className={styles.field}>
+                <label htmlFor="ct-sprint">Sprint</label>
+                <input
+                  id="ct-sprint"
+                  name="sprint"
+                  type="text"
+                  value={form.sprint}
+                  onChange={handleChange}
+                  placeholder="e.g. Sprint 4"
+                />
+              </div>
+              <div className={styles.field}>
+                <label htmlFor="ct-due">Due Date</label>
+                <input
+                  id="ct-due"
+                  name="due_date"
+                  type="date"
+                  value={form.due_date}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Row 5: Description */}
+          <div className={styles.section}>
+            <label className={styles.sectionLabel}>Description</label>
             <textarea
-              id="ct-description"
               name="description"
               value={form.description}
               onChange={handleChange}
-              rows={3}
+              rows={5}
               maxLength={5000}
-              placeholder="Describe the task..."
+              placeholder="Add a detailed description..."
+              className={styles.textarea}
             />
           </div>
 
-          <div className={styles.row}>
-            <div className={styles.field}>
-              <label htmlFor="ct-status">Status</label>
-              <select id="ct-status" name="status" value={form.status} onChange={handleChange}>
-                {STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className={styles.field}>
-              <label htmlFor="ct-priority">Priority</label>
-              <select id="ct-priority" name="priority" value={form.priority} onChange={handleChange}>
-                {PRIORITY_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className={styles.field}>
-              <label htmlFor="ct-type">Type</label>
-              <select id="ct-type" name="task_type" value={form.task_type} onChange={handleChange}>
-                {TYPE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className={styles.row}>
-            <div className={styles.field}>
-              <label htmlFor="ct-sprint">Sprint</label>
-              <input
-                id="ct-sprint"
-                name="sprint"
-                type="text"
-                value={form.sprint}
-                onChange={handleChange}
-                placeholder="e.g. Sprint 4"
-              />
-            </div>
-
-            <div className={styles.field}>
-              <label htmlFor="ct-due">Due Date</label>
-              <input
-                id="ct-due"
-                name="due_date"
-                type="date"
-                value={form.due_date}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-
-          <div className={styles.field}>
-            <label htmlFor="ct-assignee">Assigned To</label>
-            <select
-              id="ct-assignee"
-              name="assignee_id"
-              value={form.assignee_id}
-              onChange={handleChange}
-            >
-              <option value="">Unassigned</option>
-              {users.map((u) => (
-                <option key={u._id} value={u._id}>{u.full_name}</option>
+          {/* Row 6: Tags */}
+          <div className={styles.section}>
+            <label className={styles.sectionLabel}>Tags</label>
+            <div className={styles.tagInputWrap}>
+              {tags.map((t) => (
+                <span key={t} className={styles.tag}>
+                  {t}
+                  <button type="button" className={styles.tagRemove} onClick={() => removeTag(t)}>×</button>
+                </span>
               ))}
-            </select>
+              <input
+                type="text"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleTagKeyDown}
+                onBlur={addTag}
+                placeholder={tags.length === 0 ? "Type a tag and press Enter..." : ""}
+                className={styles.tagField}
+              />
+            </div>
           </div>
 
-          {selectedUser && (
-            <div className={styles.row}>
-              <div className={styles.field}>
-                <label htmlFor="ct-assignee-email">Email</label>
-                <input
-                  id="ct-assignee-email"
-                  type="email"
-                  value={selectedUser.email}
-                  readOnly
-                  className={styles.readonlyInput}
-                />
-              </div>
-
-              <div className={styles.field}>
-                <label htmlFor="ct-assignee-dept">Department</label>
-                <input
-                  id="ct-assignee-dept"
-                  type="text"
-                  value={selectedUser.department || "—"}
-                  readOnly
-                  className={styles.readonlyInput}
-                />
-              </div>
-            </div>
-          )}
-
+          {/* Footer */}
           <div className={styles.footer}>
             <button
               type="button"

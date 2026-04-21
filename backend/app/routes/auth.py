@@ -25,7 +25,7 @@ def _set_refresh_cookie(response: Response, refresh_token: str) -> None:
         secure=settings.COOKIE_SECURE,
         samesite=settings.COOKIE_SAMESITE,
         domain=settings.COOKIE_DOMAIN,
-        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 60,
+        max_age=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60,
         path="/api/auth/refresh",
     )
 

@@ -115,7 +115,7 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str = "change-me-in-production"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    REFRESH_TOKEN_EXPIRE_MINUTES: int = 7
 
     COOKIE_SECURE: bool = False
     COOKIE_SAMESITE: str = "lax"
@@ -305,7 +305,7 @@ def create_access_token(
 
 
 def create_refresh_token(user_id: str) -> str:
-    expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    expire = datetime.utcnow() + timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_M)
     payload = {
         "sub": user_id,
         "type": "refresh",
@@ -628,7 +628,7 @@ def _set_auth_cookies(response: Response, access_token: str, refresh_token: str)
         secure=settings.COOKIE_SECURE,
         samesite=settings.COOKIE_SAMESITE,
         domain=settings.COOKIE_DOMAIN,
-        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
+        max_age=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 86400,
         path="/api/auth/refresh",
     )
 

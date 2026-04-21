@@ -1,8 +1,15 @@
 .page {
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+  }
+
+  .themeCorner {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
   }
   
   .card {
@@ -75,19 +82,21 @@
   }
   
   .error {
-    background: #fef2f2;
+    background: var(--alert-error-soft-bg);
     color: var(--color-danger);
     padding: 0.625rem 0.75rem;
     border-radius: var(--radius);
     font-size: 0.8125rem;
+    border: 1px solid var(--alert-error-soft-border);
   }
   
   .success {
-    background: #f0fdf4;
-    color: #16a34a;
+    background: var(--alert-success-bg);
+    color: var(--alert-success-fg);
     padding: 0.625rem 0.75rem;
     border-radius: var(--radius);
     font-size: 0.8125rem;
+    border: 1px solid var(--alert-success-border);
   }
   
   .footer {
