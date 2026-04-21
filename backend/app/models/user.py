@@ -14,6 +14,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
     full_name: str = Field(min_length=1, max_length=100)
+    department: str = Field(default="", max_length=100)
 
 
 class UserLogin(BaseModel):
@@ -28,6 +29,7 @@ class UserInDB(BaseModel):
     email: str
     hashed_password: str
     full_name: str
+    department: str = ""
     is_active: bool = True
     roles: list[str] = Field(default_factory=lambda: ["user"])
     permissions: list[str] = Field(default_factory=lambda: ["user:read"])
@@ -43,11 +45,21 @@ class UserResponse(BaseModel):
     id: str = Field(alias="_id")
     email: str
     full_name: str
+    department: str
     is_active: bool
     roles: list[str]
     permissions: list[str]
     created_at: datetime
     updated_at: datetime
+
+    model_config = {"populate_by_name": True}
+
+
+class UserSummary(BaseModel):
+    id: str = Field(alias="_id")
+    full_name: str
+    email: str
+    department: str = ""
 
     model_config = {"populate_by_name": True}
 

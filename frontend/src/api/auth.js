@@ -1,11 +1,12 @@
 import client from "./client";
 
 const authApi = {
-  register: async (email, password, fullName) => {
+  register: async (email, password, fullName, department = "") => {
     const response = await client.post("/auth/register", {
       email,
       password,
       full_name: fullName,
+      department,
     });
     return response.data;
   },

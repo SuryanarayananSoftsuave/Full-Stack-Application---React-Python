@@ -57,8 +57,8 @@ export function AuthProvider({ children }) {
     [fetchUser]
   );
 
-  const register = useCallback(async (email, password, fullName) => {
-    const data = await authApi.register(email, password, fullName);
+  const register = useCallback(async (email, password, fullName, department) => {
+    const data = await authApi.register(email, password, fullName, department);
     // We intentionally do NOT auto-login after registration.
     // The user should explicitly log in -- this is a UX best practice
     // for production apps (confirms they remember their credentials).

@@ -1,5 +1,6 @@
 import math
 from datetime import datetime
+import re
 
 from fastapi import HTTPException, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -12,9 +13,23 @@ from app.models.task import (
     TaskResponse,
     TaskUpdate,
 )
+from app.services.user_service import get_user_by_id
 
 
 COLLECTION = "tasks"
+
+
+async def _resolve_assignee(db: AsyncIOMotorDatabase, assignee_id: str | None) -> dict:
+    if not assignee_id:
+        return {"assignee_name": None, "assignee_email": None, "assignee_department": None}
+    user = await get_user_by_id(db, assignee_id)
+    if user is None:
+        return {"assignee_name": None, "assignee_email": None, "assignee_department": None}
+    return {
+        "assignee_name": user.full_name,
+        "assignee_email": user.email,
+        "assignee_department": user.department,
+    }
 
 
 async def create_task(
@@ -22,8 +37,10 @@ async def create_task(
     data: TaskCreate,
     user_id: str,
 ) -> TaskResponse:
+    assignee_info = await _resolve_assignee(db, data.assignee_id)
     task = TaskInDB(
         **data.model_dump(),
+        **assignee_info,
         created_by=user_id,
     )
     await db[COLLECTION].insert_one(task.model_dump(by_alias=True))
@@ -53,6 +70,8 @@ async def list_tasks(
     sprint: str | None = None,
     is_archived: bool | None = None,
     created_by: str | None = None,
+    priority: str | None = None,
+    title: str | None = None,
 ) -> PaginatedTasks:
     query: dict = {}
 
@@ -60,7 +79,10 @@ async def list_tasks(
         query["status"] = status_filter
     if task_type is not None:
         query["task_type"] = task_type
-    if assignee_id is not None:
+    if assignee_id == "null":
+        # Sentinel for "unassigned" -- matches both explicit null and missing field.
+        query["assignee_id"] = None
+    elif assignee_id is not None:
         query["assignee_id"] = assignee_id
     if sprint is not None:
         query["sprint"] = sprint
@@ -68,6 +90,10 @@ async def list_tasks(
         query["is_archived"] = is_archived
     if created_by is not None:
         query["created_by"] = created_by
+    if title:
+        query["title"] = {"$regex": re.escape(title), "$options": "i"}
+    if priority:
+        query["priority"] = priority
 
     total = await db[COLLECTION].count_documents(query)
     total_pages = max(1, math.ceil(total / page_size))
@@ -76,7 +102,7 @@ async def list_tasks(
     cursor = (
         db[COLLECTION]
         .find(query)
-        .sort("created_at", -1)
+        .sort("updated_at", -1)
         .skip(skip)
         .limit(page_size)
     )
@@ -103,6 +129,10 @@ async def update_task(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No fields to update",
         )
+
+    if "assignee_id" in updates:
+        assignee_info = await _resolve_assignee(db, updates["assignee_id"])
+        updates.update(assignee_info)
 
     updates["updated_at"] = datetime.utcnow()
 

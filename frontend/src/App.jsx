@@ -6,6 +6,7 @@ import { LoginPage } from "./pages/Login/LoginPage";
 import { RegisterPage } from "./pages/Register/Registerpage";
 import { HomePage } from "./pages/Home/HomePage";
 import { AllTasksPage } from "./pages/Tasks/AllTasksPage";
+import { MyTasksPage } from "./pages/Tasks/MyTasksPage";
 
 // ── App ─────────────────────────────────────────────────────────────────────
 // The component tree order matters:
@@ -34,6 +35,7 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/tasks" element={<AllTasksPage />} />
+            <Route path="/tasks/my" element={<MyTasksPage />} />
           </Route>
         </Routes>
       </AuthProvider>

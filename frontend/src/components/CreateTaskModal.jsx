@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import tasksApi from "../api/tasks";
+import usersApi from "../api/users";
 import styles from "./CreateTaskModal.module.css";
 
 const STATUS_OPTIONS = [
@@ -30,12 +31,20 @@ const INITIAL_FORM = {
   task_type: "task",
   sprint: "",
   due_date: "",
+  assignee_id: "",
 };
 
 export function CreateTaskModal({ onClose, onCreated }) {
   const [form, setForm] = useState(INITIAL_FORM);
+  const [users, setUsers] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    usersApi.listUsers().then(setUsers).catch(() => {});
+  }, []);
+
+  const selectedUser = users.find((u) => u._id === form.assignee_id);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -54,6 +63,7 @@ export function CreateTaskModal({ onClose, onCreated }) {
       const payload = { ...form };
       if (!payload.sprint) delete payload.sprint;
       if (!payload.due_date) delete payload.due_date;
+      if (!payload.assignee_id) delete payload.assignee_id;
 
       await tasksApi.createTask(payload);
       onCreated();
@@ -159,6 +169,47 @@ export function CreateTaskModal({ onClose, onCreated }) {
               />
             </div>
           </div>
+
+          <div className={styles.field}>
+            <label htmlFor="ct-assignee">Assigned To</label>
+            <select
+              id="ct-assignee"
+              name="assignee_id"
+              value={form.assignee_id}
+              onChange={handleChange}
+            >
+              <option value="">Unassigned</option>
+              {users.map((u) => (
+                <option key={u._id} value={u._id}>{u.full_name}</option>
+              ))}
+            </select>
+          </div>
+
+          {selectedUser && (
+            <div className={styles.row}>
+              <div className={styles.field}>
+                <label htmlFor="ct-assignee-email">Email</label>
+                <input
+                  id="ct-assignee-email"
+                  type="email"
+                  value={selectedUser.email}
+                  readOnly
+                  className={styles.readonlyInput}
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label htmlFor="ct-assignee-dept">Department</label>
+                <input
+                  id="ct-assignee-dept"
+                  type="text"
+                  value={selectedUser.department || "—"}
+                  readOnly
+                  className={styles.readonlyInput}
+                />
+              </div>
+            </div>
+          )}
 
           <div className={styles.footer}>
             <button

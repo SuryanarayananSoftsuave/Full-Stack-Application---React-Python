@@ -10,6 +10,7 @@ export function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [department, setDepartment] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -19,7 +20,7 @@ export function RegisterPage() {
     setSubmitting(true);
 
     try {
-      await register(email, password, fullName);
+      await register(email, password, fullName, department);
 
       // Registration succeeded. Redirect to /login so the user
       // confirms their credentials by logging in explicitly.
@@ -83,6 +84,18 @@ export function RegisterPage() {
               required
               autoComplete="email"
               placeholder="you@example.com"
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label htmlFor="department">Department</label>
+            <input
+              id="department"
+              type="text"
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              autoComplete="organization"
+              placeholder="e.g. Engineering"
             />
           </div>
 

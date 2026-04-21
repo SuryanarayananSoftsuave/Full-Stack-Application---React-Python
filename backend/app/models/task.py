@@ -67,6 +67,9 @@ class TaskInDB(BaseModel):
     task_type: TaskType = TaskType.TASK
     sprint: str | None = None
     assignee_id: str | None = None
+    assignee_name: str | None = None
+    assignee_email: str | None = None
+    assignee_department: str | None = None
     created_by: str
     tags: list[str] = Field(default_factory=list)
     due_date: datetime | None = None
@@ -88,6 +91,9 @@ class TaskResponse(BaseModel):
     task_type: TaskType
     sprint: str | None
     assignee_id: str | None
+    assignee_name: str | None = None
+    assignee_email: str | None = None
+    assignee_department: str | None = None
     created_by: str
     tags: list[str]
     due_date: datetime | None

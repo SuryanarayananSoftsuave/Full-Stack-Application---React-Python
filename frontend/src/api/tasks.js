@@ -1,9 +1,9 @@
 import client from "./client";
 
 const tasksApi = {
-  listTasks: async (page = 1, pageSize = 50) => {
+  listTasks: async (page = 1, pageSize = 50, filters = {}) => {
     const response = await client.get("/tasks", {
-      params: { page, page_size: pageSize },
+      params: { page, page_size: pageSize, ...filters },
     });
     return response.data;
   },

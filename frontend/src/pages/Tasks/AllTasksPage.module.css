@@ -39,6 +39,73 @@
   background: var(--color-primary-hover);
 }
 
+/* ── Filter bar ──────────────────────────────────────────────────── */
+
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.searchInput {
+  flex: 1 1 240px;
+  min-width: 200px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-family: inherit;
+  background: var(--color-white);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.searchInput:focus {
+  border-color: var(--color-border-focus);
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-light);
+}
+
+.filterSelect {
+  min-width: 150px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-family: inherit;
+  background: var(--color-white);
+  color: var(--color-text);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.filterSelect:focus {
+  border-color: var(--color-border-focus);
+}
+
+.clearBtn {
+  padding: 0.5rem 0.875rem;
+  background: transparent;
+  color: var(--color-text-light);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.clearBtn:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+  border-color: var(--color-text-light);
+}
+
 /* ── Table ───────────────────────────────────────────────────────── */
 
 .tableWrap {
@@ -81,6 +148,10 @@
 
 .table tbody tr:hover {
   background: #f8fafc;
+}
+
+.clickableRow {
+  cursor: pointer;
 }
 
 .titleCell {

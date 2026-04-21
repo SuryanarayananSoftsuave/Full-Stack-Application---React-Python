@@ -43,6 +43,8 @@ async def list_tasks(
     sprint: str | None = Query(None),
     is_archived: bool | None = Query(None),
     created_by: str | None = Query(None),
+    priority: str | None = Query(None),
+    title: str | None = Query(None),
     _user: UserInDB = Depends(get_current_active_user),
     db: AsyncIOMotorDatabase = Depends(get_database),
 ):
@@ -56,6 +58,8 @@ async def list_tasks(
         sprint=sprint,
         is_archived=is_archived,
         created_by=created_by,
+        priority=priority,
+        title=title,
     )
 
 
