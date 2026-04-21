@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { ThemeToggle } from "../../components/ThemeToggle";
 import styles from "./RegisterPage.module.css";
 
 export function RegisterPage() {
@@ -54,6 +55,9 @@ export function RegisterPage() {
 
   return (
     <div className={styles.page}>
+      <div className={styles.themeCorner}>
+        <ThemeToggle />
+      </div>
       <div className={styles.card}>
         <h1 className={styles.title}>Create an account</h1>
         <p className={styles.subtitle}>Get started for free</p>

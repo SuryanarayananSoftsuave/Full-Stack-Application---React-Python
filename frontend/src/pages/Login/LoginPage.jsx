@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { ThemeToggle } from "../../components/ThemeToggle";
 import styles from "./LoginPage.module.css";
 
 export function LoginPage() {
@@ -39,6 +40,9 @@ export function LoginPage() {
 
   return (
     <div className={styles.page}>
+      <div className={styles.themeCorner}>
+        <ThemeToggle />
+      </div>
       <div className={styles.card}>
         <h1 className={styles.title}>Welcome back</h1>
         <p className={styles.subtitle}>Sign in to your account</p>

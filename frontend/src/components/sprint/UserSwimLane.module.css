@@ -1,0 +1,52 @@
+.lane {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.laneHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.laneHeader:hover {
+  background: var(--color-bg);
+}
+
+.chevron {
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+  transition: transform 0.2s;
+  display: inline-block;
+}
+
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
+.name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.count {
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+  margin-left: auto;
+}
+
+.columns {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 0.75rem 0.75rem;
+}

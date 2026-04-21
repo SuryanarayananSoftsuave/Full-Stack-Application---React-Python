@@ -38,6 +38,8 @@ export function ViewTaskModal({ taskId, onClose, onUpdated }) {
   const [task, setTask] = useState(null);
   const [form, setForm] = useState(null);
   const [users, setUsers] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [tagInput, setTagInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -56,6 +58,7 @@ export function ViewTaskModal({ taskId, onClose, onUpdated }) {
         const data = await tasksApi.getTask(taskId);
         if (!cancelled) {
           setTask(data);
+          setTags(data.tags || []);
           setForm({
             title: data.title,
             description: data.description,
@@ -82,16 +85,26 @@ export function ViewTaskModal({ taskId, onClose, onUpdated }) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const addTag = () => {
+    const val = tagInput.trim().toLowerCase();
+    if (val && !tags.includes(val)) setTags((prev) => [...prev, val]);
+    setTagInput("");
+  };
+
+  const removeTag = (t) => setTags((prev) => prev.filter((x) => x !== t));
+
+  const handleTagKeyDown = (e) => {
+    if (e.key === "Enter") { e.preventDefault(); addTag(); }
+    if (e.key === "Backspace" && !tagInput && tags.length) removeTag(tags[tags.length - 1]);
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     setError("");
     setSaving(true);
 
     try {
-      const payload = { ...form };
-      // For an UPDATE, an empty string from a "Clear"/"Unassigned" choice
-      // must be sent as null so the backend actually clears the field.
-      // Deleting the key would make Pydantic treat it as "unchanged".
+      const payload = { ...form, tags };
       payload.sprint = payload.sprint || null;
       payload.due_date = payload.due_date || null;
       payload.assignee_id = payload.assignee_id || null;
@@ -119,7 +132,10 @@ export function ViewTaskModal({ taskId, onClose, onUpdated }) {
     <div className={styles.backdrop} onClick={handleBackdropClick}>
       <div className={styles.modal}>
         <div className={styles.header}>
-          <h2 className={styles.title}>Task Details</h2>
+          <div className={styles.headerLeft}>
+            <span className={styles.headerIcon}>✎</span>
+            <h2 className={styles.headerTitle}>Task Details</h2>
+          </div>
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
             &times;
           </button>
@@ -128,157 +144,179 @@ export function ViewTaskModal({ taskId, onClose, onUpdated }) {
         {loading ? (
           <div className={styles.loading}>Loading task details...</div>
         ) : error && !form ? (
-          <div className={styles.body}>
+          <div className={styles.bodyError}>
             <div className={styles.error}>{error}</div>
           </div>
         ) : form ? (
-          <form className={styles.form} onSubmit={handleSave}>
+          <form className={styles.body} onSubmit={handleSave}>
             {error && <div className={styles.error}>{error}</div>}
 
-            <div className={styles.field}>
-              <label htmlFor="vt-title">Title *</label>
+            {/* Row 1: Title */}
+            <div className={styles.section}>
+              <label className={styles.sectionLabel}>Task Name</label>
               <input
-                id="vt-title"
                 name="title"
                 type="text"
                 value={form.title}
                 onChange={handleChange}
                 required
                 maxLength={200}
+                className={styles.titleInput}
               />
             </div>
 
-            <div className={styles.field}>
-              <label htmlFor="vt-description">Description</label>
+            {/* Row 2: Assignee | Email | Department */}
+            <div className={styles.section}>
+              <label className={styles.sectionLabel}>Assignee</label>
+              <div className={styles.row3}>
+                <div className={styles.field}>
+                  <label htmlFor="vt-assignee">Name</label>
+                  <select
+                    id="vt-assignee"
+                    name="assignee_id"
+                    value={form.assignee_id}
+                    onChange={handleChange}
+                  >
+                    <option value="">Unassigned</option>
+                    {users.map((u) => (
+                      <option key={u._id} value={u._id}>{u.full_name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className={styles.field}>
+                  <label htmlFor="vt-email">Email</label>
+                  <input
+                    id="vt-email"
+                    type="email"
+                    value={selectedUser?.email || ""}
+                    readOnly
+                    className={styles.readonlyInput}
+                    placeholder="—"
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label htmlFor="vt-dept">Department</label>
+                  <input
+                    id="vt-dept"
+                    type="text"
+                    value={selectedUser?.department || ""}
+                    readOnly
+                    className={styles.readonlyInput}
+                    placeholder="—"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Row 3: Status | Priority | Type */}
+            <div className={styles.section}>
+              <label className={styles.sectionLabel}>Details</label>
+              <div className={styles.row3}>
+                <div className={styles.field}>
+                  <label htmlFor="vt-status">Status</label>
+                  <select id="vt-status" name="status" value={form.status} onChange={handleChange}>
+                    {STATUS_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className={styles.field}>
+                  <label htmlFor="vt-priority">Priority</label>
+                  <select id="vt-priority" name="priority" value={form.priority} onChange={handleChange}>
+                    {PRIORITY_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className={styles.field}>
+                  <label htmlFor="vt-type">Type</label>
+                  <select id="vt-type" name="task_type" value={form.task_type} onChange={handleChange}>
+                    {TYPE_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Row 4: Sprint | Due Date */}
+            <div className={styles.section}>
+              <label className={styles.sectionLabel}>Schedule</label>
+              <div className={styles.row2}>
+                <div className={styles.field}>
+                  <label htmlFor="vt-sprint">Sprint</label>
+                  <input
+                    id="vt-sprint"
+                    name="sprint"
+                    type="text"
+                    value={form.sprint}
+                    onChange={handleChange}
+                    placeholder="e.g. Sprint 4"
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label htmlFor="vt-due">Due Date</label>
+                  <input
+                    id="vt-due"
+                    name="due_date"
+                    type="date"
+                    value={form.due_date}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Row 5: Description */}
+            <div className={styles.section}>
+              <label className={styles.sectionLabel}>Description</label>
               <textarea
-                id="vt-description"
                 name="description"
                 value={form.description}
                 onChange={handleChange}
-                rows={3}
+                rows={5}
                 maxLength={5000}
+                placeholder="Add a detailed description..."
+                className={styles.textarea}
               />
             </div>
 
-            <div className={styles.row}>
-              <div className={styles.field}>
-                <label htmlFor="vt-status">Status</label>
-                <select id="vt-status" name="status" value={form.status} onChange={handleChange}>
-                  {STATUS_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className={styles.field}>
-                <label htmlFor="vt-priority">Priority</label>
-                <select id="vt-priority" name="priority" value={form.priority} onChange={handleChange}>
-                  {PRIORITY_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className={styles.field}>
-                <label htmlFor="vt-type">Type</label>
-                <select id="vt-type" name="task_type" value={form.task_type} onChange={handleChange}>
-                  {TYPE_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className={styles.row}>
-              <div className={styles.field}>
-                <label htmlFor="vt-sprint">Sprint</label>
-                <input
-                  id="vt-sprint"
-                  name="sprint"
-                  type="text"
-                  value={form.sprint}
-                  onChange={handleChange}
-                  placeholder="e.g. Sprint 4"
-                />
-              </div>
-
-              <div className={styles.field}>
-                <label htmlFor="vt-due">Due Date</label>
-                <input
-                  id="vt-due"
-                  name="due_date"
-                  type="date"
-                  value={form.due_date}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-
-            <div className={styles.field}>
-              <label htmlFor="vt-assignee">Assigned To</label>
-              <select
-                id="vt-assignee"
-                name="assignee_id"
-                value={form.assignee_id}
-                onChange={handleChange}
-              >
-                <option value="">Unassigned</option>
-                {users.map((u) => (
-                  <option key={u._id} value={u._id}>{u.full_name}</option>
+            {/* Row 6: Tags */}
+            <div className={styles.section}>
+              <label className={styles.sectionLabel}>Tags</label>
+              <div className={styles.tagInputWrap}>
+                {tags.map((t) => (
+                  <span key={t} className={styles.tag}>
+                    {t}
+                    <button type="button" className={styles.tagRemove} onClick={() => removeTag(t)}>×</button>
+                  </span>
                 ))}
-              </select>
-            </div>
-
-            {selectedUser && (
-              <div className={styles.row}>
-                <div className={styles.field}>
-                  <label htmlFor="vt-assignee-email">Email</label>
-                  <input
-                    id="vt-assignee-email"
-                    type="email"
-                    value={selectedUser.email}
-                    readOnly
-                    className={styles.readonlyInput}
-                  />
-                </div>
-
-                <div className={styles.field}>
-                  <label htmlFor="vt-assignee-dept">Department</label>
-                  <input
-                    id="vt-assignee-dept"
-                    type="text"
-                    value={selectedUser.department || "—"}
-                    readOnly
-                    className={styles.readonlyInput}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Read-only metadata */}
-            <div className={styles.readonlyRow}>
-              <div className={styles.readonlyItem}>
-                <span className={styles.readonlyLabel}>Created</span>
-                <span className={styles.readonlyValue}>{formatDateTime(task.created_at)}</span>
-              </div>
-              <div className={styles.readonlyItem}>
-                <span className={styles.readonlyLabel}>Updated</span>
-                <span className={styles.readonlyValue}>{formatDateTime(task.updated_at)}</span>
+                <input
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={handleTagKeyDown}
+                  onBlur={addTag}
+                  placeholder={tags.length === 0 ? "Type a tag and press Enter..." : ""}
+                  className={styles.tagField}
+                />
               </div>
             </div>
 
-            {/* Tags (read-only) */}
-            {task.tags && task.tags.length > 0 && (
-              <div className={styles.section}>
-                <span className={styles.readonlyLabel}>Tags</span>
-                <div className={styles.tagList}>
-                  {task.tags.map((tag) => (
-                    <span key={tag} className={styles.tag}>{tag}</span>
-                  ))}
-                </div>
+            {/* Row 7: Metadata */}
+            <div className={styles.metaStrip}>
+              <div className={styles.metaItem}>
+                <span className={styles.metaLabel}>Created</span>
+                <span className={styles.metaValue}>{formatDateTime(task.created_at)}</span>
               </div>
-            )}
+              <div className={styles.metaDot} />
+              <div className={styles.metaItem}>
+                <span className={styles.metaLabel}>Updated</span>
+                <span className={styles.metaValue}>{formatDateTime(task.updated_at)}</span>
+              </div>
+            </div>
 
+            {/* Footer */}
             <div className={styles.footer}>
               <button
                 type="button"
@@ -293,7 +331,7 @@ export function ViewTaskModal({ taskId, onClose, onUpdated }) {
                 className={styles.saveBtn}
                 disabled={saving}
               >
-                {saving ? "Saving..." : "Save"}
+                {saving ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </form>

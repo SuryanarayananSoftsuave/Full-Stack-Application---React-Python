@@ -1,0 +1,449 @@
+/* ── Page shell ──────────────────────────────────────────────────────────── */
+
+.page {
+  width: 100%;
+  padding: 1.75rem 2rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  background: linear-gradient(
+    180deg,
+    var(--color-page-gradient-from) 0%,
+    var(--color-page-gradient-to) 100%
+  );
+  min-height: 100%;
+}
+
+.loading,
+.miniEmpty {
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--color-text-light);
+  font-size: 0.9375rem;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 1.625rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text-strong);
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin: 0.25rem 0 0;
+  color: var(--color-text-light);
+  font-size: 0.875rem;
+}
+
+.refreshBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.refreshBtn:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-strong);
+}
+
+.refreshBtn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.refreshBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── KPI cards ──────────────────────────────────────────────────────────── */
+
+.kpiRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.kpiCard {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.125rem 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 14px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.kpiCard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--accentBg, rgba(59, 130, 246, 0.08)) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.kpiCard:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
+.kpiIcon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  color: var(--accentColor, #3b82f6);
+  background: var(--accentBg, rgba(59, 130, 246, 0.1));
+  flex-shrink: 0;
+}
+
+.kpiBody {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kpiLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-light);
+}
+
+.kpiValue {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--color-text-strong);
+  line-height: 1.1;
+}
+
+.kpiSub {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+/* KPI accent themes — tinted backgrounds work well in both themes
+   because they're translucent over the card surface. */
+.accent_blue   { --accentColor: #3b82f6; --accentBg: rgba(59, 130, 246, 0.16); }
+.accent_amber  { --accentColor: #f59e0b; --accentBg: rgba(245, 158, 11, 0.16); }
+.accent_red    { --accentColor: #ef4444; --accentBg: rgba(239, 68, 68, 0.16); }
+.accent_green  { --accentColor: #10b981; --accentBg: rgba(16, 185, 129, 0.16); }
+
+/* ── Chart cards ────────────────────────────────────────────────────────── */
+
+.gridTwo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 1rem;
+}
+
+.chartCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 14px;
+  padding: 1.25rem 1.25rem 1rem;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+}
+
+.chartHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.chartTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-strong);
+  margin: 0;
+}
+
+.chartSubtitle {
+  font-size: 0.8125rem;
+  color: var(--color-text-light);
+  margin: 4px 0 0;
+}
+
+.chartBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ── Custom tooltip ─────────────────────────────────────────────────────── */
+
+.tooltip {
+  background: var(--tooltip-bg);
+  color: var(--tooltip-fg);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  min-width: 140px;
+}
+
+.tooltipLabel {
+  font-weight: 600;
+  margin-bottom: 0.375rem;
+  color: var(--tooltip-fg);
+  opacity: 0.7;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tooltipRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2px 0;
+}
+
+.tooltipDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tooltipName {
+  flex: 1;
+  color: var(--tooltip-fg);
+  opacity: 0.9;
+}
+
+.tooltipValue {
+  font-weight: 600;
+  color: var(--tooltip-fg);
+}
+
+/* ── Custom legend (status donut) ───────────────────────────────────────── */
+
+.legend {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-light);
+  margin-right: auto;
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendName {
+  flex: 1;
+}
+
+.legendValue {
+  font-weight: 600;
+  color: var(--color-text-strong);
+}
+
+/* ── Deadline list ──────────────────────────────────────────────────────── */
+
+.deadlineList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.deadlineRow {
+  display: grid;
+  grid-template-columns: 4px 1fr auto auto;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 0.875rem;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: background 0.12s, border-color 0.12s, transform 0.08s;
+}
+
+.deadlineRow:hover {
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.deadlineRow:active {
+  transform: translateY(1px);
+}
+
+.deadlineStripe {
+  width: 4px;
+  height: 36px;
+  border-radius: 4px;
+}
+
+.deadlineMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.deadlineTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deadlineMeta {
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+  display: flex;
+  gap: 0.375rem;
+  align-items: center;
+}
+
+.dotSep {
+  color: var(--color-border-strong);
+}
+
+.deadlineBadge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.deadlineNormal {
+  background: var(--pill-normal-bg);
+  color: var(--pill-normal-fg);
+}
+
+.deadlineSoon {
+  background: var(--pill-soon-bg);
+  color: var(--pill-soon-fg);
+}
+
+.deadlineToday {
+  background: var(--pill-today-bg);
+  color: var(--pill-today-fg);
+}
+
+.deadlineOverdue {
+  background: var(--pill-overdue-bg);
+  color: var(--pill-overdue-fg);
+}
+
+.deadlineDate {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  min-width: 64px;
+  text-align: right;
+}
+
+/* ── Empty state ────────────────────────────────────────────────────────── */
+
+.emptyState {
+  padding: 3.5rem 2rem;
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.emptyState h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--color-text-strong);
+}
+
+.emptyState p {
+  margin: 0;
+  color: var(--color-text-light);
+  font-size: 0.9375rem;
+}
+
+.emptyLink {
+  margin-top: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+.emptyLink:hover {
+  text-decoration: underline;
+}
+
+/* ── Responsive tweaks ──────────────────────────────────────────────────── */
+
+@media (max-width: 720px) {
+  .page {
+    padding: 1rem 1rem 2rem;
+  }
+  .title {
+    font-size: 1.375rem;
+  }
+  .deadlineRow {
+    grid-template-columns: 4px 1fr auto;
+  }
+  .deadlineDate {
+    display: none;
+  }
+}

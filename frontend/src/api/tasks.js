@@ -23,6 +23,11 @@ const tasksApi = {
     return response.data;
   },
 
+  listSprints: async () => {
+    const response = await client.get("/tasks/sprints/list");
+    return response.data;
+  },
+
   deleteTask: async (taskId) => {
     const response = await client.delete(`/tasks/${taskId}`);
     return response.data;

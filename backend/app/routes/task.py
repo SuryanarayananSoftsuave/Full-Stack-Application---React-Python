@@ -36,7 +36,7 @@ async def create(
 )
 async def list_tasks(
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=100),
+    page_size: int = Query(50, ge=1, le=200),
     status_filter: str | None = Query(None, alias="status"),
     task_type: str | None = Query(None),
     assignee_id: str | None = Query(None),
@@ -45,6 +45,7 @@ async def list_tasks(
     created_by: str | None = Query(None),
     priority: str | None = Query(None),
     title: str | None = Query(None),
+    exclude_task_type: str | None = Query(None),
     _user: UserInDB = Depends(get_current_active_user),
     db: AsyncIOMotorDatabase = Depends(get_database),
 ):
@@ -60,7 +61,20 @@ async def list_tasks(
         created_by=created_by,
         priority=priority,
         title=title,
+        exclude_task_type=exclude_task_type,
     )
+
+
+@router.get(
+    "/sprints/list",
+    response_model=list[str],
+    summary="List distinct sprint names",
+)
+async def get_sprints(
+    _user: UserInDB = Depends(get_current_active_user),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+):
+    return await task_service.list_sprints(db)
 
 
 @router.get(

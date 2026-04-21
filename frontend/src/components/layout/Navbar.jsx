@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { ThemeToggle } from "../ThemeToggle";
 import styles from "./Navbar.module.css";
 
 export function Navbar({ sidebarWidth }) {
@@ -16,6 +17,7 @@ export function Navbar({ sidebarWidth }) {
       <span className={styles.title}>Dashboard</span>
 
       <div className={styles.actions}>
+        <ThemeToggle />
         <span className={styles.userName}>{user?.full_name}</span>
         <button className={styles.logoutBtn} onClick={handleLogout}>
           Sign out

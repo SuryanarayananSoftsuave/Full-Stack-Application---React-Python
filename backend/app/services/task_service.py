@@ -72,13 +72,17 @@ async def list_tasks(
     created_by: str | None = None,
     priority: str | None = None,
     title: str | None = None,
+    exclude_task_type: str | None = None,
 ) -> PaginatedTasks:
     query: dict = {}
 
     if status_filter is not None:
         query["status"] = status_filter
     if task_type is not None:
-        query["task_type"] = task_type
+        if "," in task_type:
+            query["task_type"] = {"$in": [t.strip() for t in task_type.split(",")]}
+        else:
+            query["task_type"] = task_type
     if assignee_id == "null":
         # Sentinel for "unassigned" -- matches both explicit null and missing field.
         query["assignee_id"] = None
@@ -94,6 +98,19 @@ async def list_tasks(
         query["title"] = {"$regex": re.escape(title), "$options": "i"}
     if priority:
         query["priority"] = priority
+    if exclude_task_type:
+        excluded = [t.strip() for t in exclude_task_type.split(",")]
+        if "task_type" in query:
+            existing = query["task_type"]
+            if isinstance(existing, dict) and "$in" in existing:
+                query["task_type"]["$in"] = [
+                    t for t in existing["$in"] if t not in excluded
+                ]
+            else:
+                if existing in excluded:
+                    query["task_type"] = {"$nin": excluded}
+        else:
+            query["task_type"] = {"$nin": excluded}
 
     total = await db[COLLECTION].count_documents(query)
     total_pages = max(1, math.ceil(total / page_size))
@@ -147,6 +164,11 @@ async def update_task(
             detail="Task not found",
         )
     return TaskResponse(**result)
+
+
+async def list_sprints(db: AsyncIOMotorDatabase) -> list[str]:
+    sprints = await db[COLLECTION].distinct("sprint")
+    return sorted(s for s in sprints if s)
 
 
 async def delete_task(
